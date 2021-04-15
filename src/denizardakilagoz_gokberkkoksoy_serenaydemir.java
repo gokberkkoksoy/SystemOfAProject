@@ -1,23 +1,61 @@
+/*
+ * Deniz Arda KILAGÖZ 150118003
+ * Gökberk KÖKSOY     150118069
+ * Serenay DEMİR      150118057
+ */
+
+/*
+    This program displays unsigned, signed and floating point numbers' binary representation.
+ */
+
 import java.io.FileNotFoundException;
 import java.lang.StringBuilder;
 import java.io.File;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.io.PrintWriter;
 
 public class denizardakilagoz_gokberkkoksoy_serenaydemir {
-    public static void main(String[] args) throws FileNotFoundException {
-        int isLittle; // little endian or big endian
-        int fpBitSize; //  floating point bit size
-        int bitSize = 16; // unsigned/signed bit size
-        Scanner sc = new Scanner(System.in);
-        PrintWriter writer = new PrintWriter("output.txt");
-        System.out.print("Byte Ordering Type (0 for Little Endian, 1 for Big Endian): ");
-        isLittle = sc.nextInt();
-        System.out.print("Floating Point Size: ");
-        fpBitSize = Integer.parseInt(sc.next()) * 8;
+    public static void main(String[] args) throws InputMismatchException {
+        /*
+        int isLittle;   indicates the byte representation
+        int fpBitSize;  indicates floating point numbers' bit size specified by the user
+        final int bitSize;    indicates unsigned and signed numbers' bit size
+        */
 
         try {
-            File file = new File("input.txt"/*args[0]*/);
+        int isLittle;
+        int fpBitSize;
+        final int bitSize = 16;
+        Scanner sc = new Scanner(System.in);
+        PrintWriter writer = new PrintWriter("output.txt");
+
+        System.out.print("Byte Ordering Type (0 for Little Endian, 1 for Big Endian): ");
+        isLittle = sc.nextInt();
+        do {
+            if(isLittle < 0 || isLittle > 1) {
+                System.out.println("Invalid input!");
+            } else {
+                continue;
+            }
+            System.out.print("Byte Ordering Type (0 for Little Endian, 1 for Big Endian): ");
+            isLittle = sc.nextInt();
+        } while(isLittle < 0 || isLittle > 1);
+
+        System.out.print("Floating Point Size: ");
+        fpBitSize = Integer.parseInt(sc.next()) * 8;
+        do {
+            if(fpBitSize < 8 || fpBitSize > 32) {
+                System.out.println("Invalid input!");
+            } else {
+                continue;
+            }
+            System.out.print("Floating Point Size: ");
+            fpBitSize = Integer.parseInt(sc.next()) * 8;
+        } while(fpBitSize < 8 || fpBitSize > 32);
+
+
+            File file = new File("input.txt");
             Scanner scanner = new Scanner(file);
             while (scanner.hasNextLine()) {
                 String data = scanner.nextLine();
@@ -50,24 +88,28 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
                             writer.flush();
                             break;
                     }
-                    //System.out.println(littleEndian(convertB2Hex(convertF2B(number,8,23))));
                 } else { // signed integer
                     int number = Integer.parseInt(data);
-                    System.out.println(isLittle == 1 ? convertB2Hex(convertS2B(number,bitSize)) : littleEndian(convertB2Hex(convertS2B(number,bitSize))));
-                    writer.println(isLittle == 1 ? convertB2Hex(convertS2B(number,bitSize)) : littleEndian(convertB2Hex(convertS2B(number,bitSize))));
+                    System.out.println(isLittle == 1 ? convertB2Hex(convertS2B(number)) : littleEndian(convertB2Hex(convertS2B(number))));
+                    writer.println(isLittle == 1 ? convertB2Hex(convertS2B(number)) : littleEndian(convertB2Hex(convertS2B(number))));
                     writer.flush();
                 }
             }
             scanner.close();
             writer.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
+        } catch (FileNotFoundException | InputMismatchException e) {
+            if(e instanceof InputMismatchException) {
+                System.out.println("\nAn error occurred while getting the user input.");
+            } else {
+                System.out.println("\nAn error occurred while reading the input file");
+            }
+            System.out.println("\nPlease run the program again.");
         }
 
     }
 
-    // unsigned to bits WORKS WELL
-    static String convertU2B(int num, int bitSize) {
+    // Converts unsigned numbers to binary with Division algorithm.
+    private static String convertU2B(int num, int bitSize) {
         StringBuilder numberStr = new StringBuilder();
         while (num > 0) {
             numberStr.append(num % 2);
@@ -81,8 +123,8 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
         return numberStr.toString();
     }
 
-    //bits to unsigned decimal WORKS WELL
-    static int convertB2U(String num) {
+    // Converts binary unsigned numbers to decimal.
+    private static int convertB2U(String num) {
         int result = 0;
         for(int i = num.length()-1;i >= 0;i--){
             if(num.charAt(i) == '1'){
@@ -93,15 +135,15 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
     }
 
 
-    // signed decimal to binary WORKS WELL
-    static String convertS2B(int num, int bitSize) {
+    // Converts signed integers to binary with Subtract Powers of Two algorithm.
+    private static String convertS2B(int num) {
         StringBuilder result = new StringBuilder();
         int numResult;
         double limitPowerOf2 = 2;
         int powerIndex = 0;
         int len;
         if (num >= 0) {
-            result.append(convertU2B(num, bitSize));
+            result.append(convertU2B(num, 16));
         } else {
             result.append("1");
             while(Math.abs(num) > Math.pow(limitPowerOf2,powerIndex)) {
@@ -118,31 +160,15 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
                 }
             }
             len = result.length();
-            for(int i = 0;i < bitSize - len;i++){
+            for(int i = 0; i < 16 - len; i++){
                 result.insert(0, '1');
             }
         }
         return result.toString();
     }
 
-    // bits to signed decimal WORKS WELL
-    static int convertB2S(String num) {
-        int result = 0;
-        if(num.charAt(0) == '0') {
-            result = convertB2U(num);
-        } else {
-            result += Math.pow(2,num.length()-1) * -1;
-            for(int i = 1; i < num.length();i++){
-                if(num.charAt(i) == '1') {
-                    result += Math.pow(2,num.length()-1-i);
-                }
-            }
-        }
-        //System.out.println(result);
-        return result;
-    }
-
-    static String convertF2B(double num, int exponentSize, int mantissaSize) {
+    // Converts floating point numbers to binary.
+    private static String convertF2B(double num, int exponentSize, int mantissaSize) {
         String[] tokens = Double.toString(num).split("\\.");
         StringBuilder decimalPartStr = new StringBuilder();
         StringBuilder fractionPartStr = new StringBuilder();
@@ -157,7 +183,7 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
         if(-1 < num && num < 1) {
             // num is +-0.xxxxxx
             decimalPartStr.append(0);
-            getFraction(decimalPartStr, fractionPartStr, fraction, mantissaIndex);
+            getFraction(fractionPartStr, fraction, mantissaIndex);
             int length = fractionPartStr.length();
             for(int i = 0; i < length;i++){
                 if(fractionPartStr.charAt(0) == '0'){
@@ -167,11 +193,12 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
                     break;
                 }
             }
+
             exponent += bias-1;
             exponentStr.append(convertU2B(exponent,exponentSize));
-            fractionPartStr.deleteCharAt(0);
-            //System.out.println("exp is: " + exponentStr);
-            //System.out.println("frac is: " + fractionPartStr);
+            if(exponent != 0) {
+                fractionPartStr.deleteCharAt(0);
+            }
             mantissaStr.append(fractionPartStr);
             if(mantissaStr.length() < mantissaSize) {
                 while(mantissaStr.length()<mantissaSize){
@@ -179,20 +206,21 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
                 }
             } else {
                 int decMantissa;
-                while(mantissaSize < mantissaStr.length()-1) {
+                while(mantissaSize < mantissaStr.length()-1) { // chops the extra bits (not gonna used)
                     mantissaStr.deleteCharAt(mantissaStr.length()-1);
                 }
                 if(mantissaStr.charAt(mantissaStr.length()-1) == '0') {
                     mantissaStr.deleteCharAt(mantissaStr.length()-1);
                 } else {
                     mantissaStr.deleteCharAt(mantissaStr.length()-1);
-                    decMantissa = convertB2U(mantissaStr.toString()) + 1;
-                    mantissaStr.replace(0,mantissaStr.length(), "");
-                    mantissaStr.append(convertU2B(decMantissa,mantissaSize));
+                    if(mantissaSize >= 13) {
+                        decMantissa = convertB2U(mantissaStr.toString()) + 1;
+                        mantissaStr.replace(0,mantissaStr.length(), "");
+                        mantissaStr.append(convertU2B(decMantissa,mantissaSize));
+                    }
                 }
             }
-            result.append(num < 0 ? "1" : "0").append(exponentStr).append(mantissaStr);
-
+            result.append(num < 0 ? 1 : 0).append(exponentStr).append(mantissaStr);
             return result.toString();
         } else {
             // obtain the xxxxxx. part
@@ -201,10 +229,13 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
                 decimal >>= 1;
             }
             decimalPartStr.reverse();
-            getFraction(decimalPartStr, fractionPartStr, fraction, mantissaIndex);
+            getFraction(fractionPartStr, fraction, mantissaIndex);
             // 1.xxxxx obtained
             exponent = bias + decimalPartStr.length()-1;
             exponentStr.append(convertU2B(exponent,exponentSize));
+            for(int i = exponentStr.length()-1; i >= exponentSize;i--){
+                exponentStr.deleteCharAt(i);
+            }
             mantissaStr.append(decimalPartStr.deleteCharAt(0)).append(fractionPartStr);
             if(mantissaStr.length() > mantissaSize) {
                 int decMantissa;
@@ -214,9 +245,11 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
                 if(mantissaStr.charAt(mantissaStr.length()-1) == '1')  {
                     // rounding operation
                     mantissaStr.deleteCharAt(mantissaStr.length()-1);
-                    decMantissa = convertB2U(mantissaStr.toString()) + 1;
-                    mantissaStr.replace(0,mantissaStr.length(), "");
-                    mantissaStr.append(convertU2B(decMantissa,mantissaSize));
+                    if(mantissaSize >= 13) {
+                        decMantissa = convertB2U(mantissaStr.toString()) + 1;
+                        mantissaStr.replace(0,mantissaStr.length(), "");
+                        mantissaStr.append(convertU2B(decMantissa,mantissaSize));
+                    }
                 } else {
                     mantissaStr.deleteCharAt(mantissaStr.length()-1);
                 }
@@ -225,19 +258,12 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
                     mantissaStr.append(0);
                 }
             }
-            result.append(num > 0 ? "0" : "1").append(exponentStr).append(mantissaStr);
-            //System.out.println("exponent size: " + exponentStr.length() + ", exponent is: " + exponentStr);
-            //System.out.println("mantissa size: " + mantissaStr.length() + ", mantissa is: " + mantissaStr);
-
-            //System.out.println(result);
-
+            result.append(num > 0 ? 0 : 1).append(exponentStr).append(mantissaStr);
         }
-
-
         return result.toString();
     }
-
-    private static void getFraction(StringBuilder decimalPartStr, StringBuilder fractionPartStr, double fraction, int mantissaIndex) {
+    // Gets the binary value of floating point numbers latter part.
+    private static void getFraction(StringBuilder fractionPartStr, double fraction, int mantissaIndex) {
         if(fraction == 0.0){
             fractionPartStr.append(0);
             return;
@@ -254,13 +280,9 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
                 fractionPartStr.append(1);
             }
         }
-        //System.out.println("decimal is: " + decimalPartStr);
-        //System.out.println("fraction is: " + fractionPartStr);
     }
-
-
-
-    static String convertB2Hex(String num) {
+    // Hexadecimal representation of binary numbers
+    private static String convertB2Hex(String num) {
         StringBuilder hexResult = new StringBuilder();
         StringBuilder number = new StringBuilder();
         number.append(num);
@@ -277,7 +299,8 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
         return hexResult.toString();
     }
 
-    static String littleEndian(String hex) {
+    // Displays the hexadecimal numbers according to the little endian representation.
+    private static String littleEndian(String hex) {
         StringBuilder result = new StringBuilder();
         String[] tokens = hex.split(" ");
         for(int i = tokens.length-1;i >= 0;i--){
@@ -288,7 +311,8 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
         return result.toString();
     }
 
-    static String hexMapping(int num) {
+    // Utility function to get hexadecimal character for 4 bits.
+    private static String hexMapping(int num) {
         switch (num) {
             case 10:
                 return "A";
