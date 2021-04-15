@@ -53,8 +53,6 @@ public class denizardakilagoz_gokberkkoksoy_serenaydemir {
             System.out.print("Floating Point Size: ");
             fpBitSize = Integer.parseInt(sc.next()) * 8;
         } while(fpBitSize < 8 || fpBitSize > 32);
-
-
             File file = new File("input.txt");
             Scanner scanner = new Scanner(file);
             while (scanner.hasNextLine()) {
